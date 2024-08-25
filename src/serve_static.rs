@@ -4,7 +4,7 @@
 //! This works by loading them from Cloudflare KV by way of Worker Sites.
 //! This is what the `[sites]` config was in `wrangler.toml`
 //!
-//! The wasm executor on the edge supplies a `__STATIC_CONTENT_MANIFEST` varable that serves as a
+//! The wasm executor on the edge supplies a `__STATIC_CONTENT_MANIFEST` variable that serves as a
 //! map of file names to KV keys. We then load the bytes of this data from the kv store. Finally,
 //! we return this data with a mime type derived from the filename's extension (i.e. `.png` is
 //! `image/png`).
