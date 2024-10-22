@@ -817,6 +817,7 @@ dependencies = [
  "console_log",
  "gloo-net",
  "gloo-timers",
+ "http-body-util",
  "leptos",
  "leptos_axum",
  "leptos_dom",
