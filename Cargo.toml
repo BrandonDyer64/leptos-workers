@@ -28,9 +28,9 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tower = { version = "0.4", optional = true }
 tower-service = "0.3"
-wasm-bindgen = { version = "0.2.92", optional = true }
+wasm-bindgen = { version = "=0.2.93", optional = true }
 wasm-bindgen-futures = "0.4"
-worker = { version = "0.1", features = ["http", "axum", "d1"], optional = true }
+worker = { version = "0.4", features = ["http", "axum", "d1"], optional = true }
 
 [features]
 hydrate = [
