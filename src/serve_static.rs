@@ -9,7 +9,7 @@
 //! we return this data with a mime type derived from the filename's extension (i.e. `.png` is
 //! `image/png`).
 
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 use axum::{
     http::Uri,
@@ -17,36 +17,24 @@ use axum::{
     response::IntoResponse,
     Extension,
 };
-use once_cell::sync::Lazy;
-use worker::wasm_bindgen::prelude::*;
+use http_body_util::BodyExt as _;
 use worker::*;
 
-#[wasm_bindgen(module = "__STATIC_CONTENT_MANIFEST")]
-extern "C" {
-    #[wasm_bindgen(js_name = "default")]
-    static MANIFEST: String;
+pub async fn get_static_file(asset: &str, env: &Env) -> Result<Option<Vec<u8>>> {
+    let asset = env
+        .get_binding::<Fetcher>("ASSETS")
+        .expect("ASSETS BINDING")
+        .fetch(["https://example.com/", asset].concat(), None)
+        .await?;
+    if !asset.status().is_success() {
+        return Ok(None);
+    }
+    let bytes = asset.into_body().collect().await?.to_bytes().to_vec();
+    Ok(Some(bytes))
 }
 
-static MANIFEST_MAP: Lazy<HashMap<&str, &str>> =
-    Lazy::new(|| serde_json::from_str::<HashMap<&str, &str>>(&MANIFEST).unwrap_or_default());
-
-#[worker::send]
-pub async fn serve_static(uri: Uri, Extension(env): Extension<Arc<Env>>) -> impl IntoResponse {
-    let kv_assets = env.kv("__STATIC_CONTENT").expect("KV Store");
-    let asset = uri.path().trim_start_matches('/').to_string();
-    let asset_str = asset.as_str();
-
-    /* if we are using miniflare (or wrangler with --local), MANIFEST_MAP is empty and we just
-    fetch the requested name of the asset from the KV store, otherwise, MANIFEST_MAP
-    provides the hashed name of the asset */
-    let key = MANIFEST_MAP
-        .get(asset_str)
-        .unwrap_or(&asset_str)
-        .to_string();
-
-    let data = kv_assets.get(&key).bytes().await;
-
-    let mime = asset_str.rsplit_once('.').map_or_else(
+pub fn get_path_mime_type(path: &str) -> &'static str {
+    path.rsplit_once('.').map_or_else(
         || "text/plain",
         |(_, ext)| match ext {
             "html" => "text/html",
@@ -60,7 +48,14 @@ pub async fn serve_static(uri: Uri, Extension(env): Extension<Arc<Env>>) -> impl
             "wasm" => "application/wasm",
             _ => "text/plain",
         },
-    );
+    )
+}
+
+#[worker::send]
+pub async fn serve_static(uri: Uri, Extension(env): Extension<Arc<Env>>) -> impl IntoResponse {
+    let asset = uri.path().trim_start_matches('/').to_string();
+    let data = get_static_file(&asset, &env).await;
+    let mime = get_path_mime_type(&asset);
 
     match data {
         Ok(Some(data)) => ([(header::CONTENT_TYPE, mime)], data).into_response(),
