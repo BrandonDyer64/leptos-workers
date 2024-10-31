@@ -12,20 +12,6 @@ Install Rust from [rustup.rs](https://rustup.rs). Then:
 cargo install cargo-leptos --locked
 ```
 
-### worker-build
-
-You'll need a custom build of `worker-build` that adds the static asset manifest to the list of external modules.
-One such forks is [here](https://github.com/BrandonDyer64/workers-rs/tree/external-static-assets).
-
-This will only be necessary until they add it to the official `workers-rs` repo.
-
-```bash
-git clone https://github.com/BrandonDyer64/workers-rs.git
-cd workers-rs
-git checkout external-static-assets
-cargo install --path worker-build
-```
-
 ### Wrangler
 
 You'll need some version of Node.js. I personally recommend using [nvm](https://github.com/nvm-sh/nvm). Then:
